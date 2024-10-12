@@ -2,9 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
 import fs from 'fs';
 import path from 'path';
-import mime from 'mime-types';
-import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
 class FilesController {
   static async postUpload(request, response) {
@@ -71,6 +70,49 @@ class FilesController {
     await dbClient.db.collection('files').insertOne(fileDocument);
 
     return response.status(201).json(fileDocument);
+  }
+
+  static async getShow(request, response) {
+    const token = request.header('X-Token');
+    const userId = await redisClient.get(`auth_${token}`);
+
+    if (!userId) {
+      return response.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const fileId = request.params.id;
+    const file = await dbClient.db.collection('files').findOne({
+      _id: ObjectId(fileId),
+      userId: ObjectId(userId),
+    });
+
+    if (!file) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+
+    return response.status(200).json(file);
+  }
+
+  static async getIndex(request, response) {
+    const token = request.header('X-Token');
+    const userId = await redisClient.get(`auth_${token}`);
+
+    if (!userId) {
+      return response.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const parentId = request.query.parentId || 0;
+    const page = parseInt(request.query.page, 10) || 0;
+
+    const files = await dbClient.db.collection('files')
+      .aggregate([
+        { $match: { parentId: parentId === '0' ? 0 : ObjectId(parentId), userId: ObjectId(userId) } },
+        { $skip: page * 20 },
+        { $limit: 20 }
+      ])
+      .toArray();
+
+    return response.status(200).json(files);
   }
 }
 
