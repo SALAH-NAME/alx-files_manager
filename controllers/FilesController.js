@@ -8,7 +8,13 @@ import redisClient from '../utils/redis';
 
 class FilesController {
   static async postUpload(request, response) {
-    const { name, type, parentId = 0, isPublic = false, data } = request.body;
+    const {
+      name,
+      type,
+      parentId = 0,
+      isPublic = false,
+      data,
+    } = request.body;
     const token = request.header('X-Token');
     const userId = await redisClient.get(`auth_${token}`);
 
