@@ -3,36 +3,33 @@ import { promisify } from 'util';
 
 class RedisClient {
   constructor() {
-    this.redisInstance = createClient();
-    this.redisInstance.on('error', (error) => {
+    this.client = createClient();
+    this.client.on('error', (error) => {
       console.log(`Redis client not connected to server: ${error}`);
     });
   }
 
   isAlive() {
-    if (this.redisInstance.connected) {
-      return true;
-    }
-    return false;
+    return this.client.connected;
   }
 
-  async getValue(key) {
-    const getCommand = promisify(this.redisInstance.get).bind(this.redisInstance);
+  async get(key) {
+    const getCommand = promisify(this.client.get).bind(this.client);
     const value = await getCommand(key);
     return value;
   }
 
-  async setKey(key, value, time) {
-    const setCommand = promisify(this.redisInstance.set).bind(this.redisInstance);
+  async set(key, value, time) {
+    const setCommand = promisify(this.client.set).bind(this.client);
     await setCommand(key, value);
-    await this.redisInstance.expire(key, time);
+    await this.client.expire(key, time);
   }
 
-  async deleteKey(key) {
-    const delCommand = promisify(this.redisInstance.del).bind(this.redisInstance);
+  async del(key) {
+    const delCommand = promisify(this.client.del).bind(this.client);
     await delCommand(key);
   }
 }
 
 const redisClient = new RedisClient();
-module.exports = redisClient;
+export default redisClient;
