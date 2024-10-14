@@ -1,11 +1,15 @@
-import { createClient } from 'redis';
+/* eslint-disable no-return-await */
+import redis from 'redis';
 import { promisify } from 'util';
 
 class RedisClient {
   constructor() {
-    this.client = createClient();
+    this.client = redis.createClient();
+    this.getAsync = promisify(this.client.get).bind(this.client);
     this.client.on('error', (error) => {
-      console.log(`Redis client not connected to server: ${error}`);
+      console.log(`Redis client not connected to the server: ${error.message}`);
+    });
+    this.client.on('connect', () => {
     });
   }
 
@@ -13,23 +17,18 @@ class RedisClient {
     return this.client.connected;
   }
 
-  async get(key) {
-    const getCommand = promisify(this.client.get).bind(this.client);
-    const value = await getCommand(key);
-    return value;
+  async getValue(key) {
+    return await this.getAsync(key);
   }
 
-  async set(key, value, time) {
-    const setCommand = promisify(this.client.set).bind(this.client);
-    await setCommand(key, value);
-    await this.client.expire(key, time);
+  async setValue(key, value, duration) {
+    this.client.setex(key, duration, value);
   }
 
-  async del(key) {
-    const delCommand = promisify(this.client.del).bind(this.client);
-    await delCommand(key);
+  async deleteValue(key) {
+    this.client.del(key);
   }
 }
 
-const redisClient = new RedisClient();
-export default redisClient;
+const redisClientInstance = new RedisClient();
+export default redisClientInstance;
