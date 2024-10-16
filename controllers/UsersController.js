@@ -18,7 +18,7 @@ class UsersController {
     }
 
     try {
-      const usersCollection = dbClient.db().collection('users');
+      const usersCollection = await dbClient.usersCollection();
       const existingUser = await usersCollection.findOne({ email });
 
       if (existingUser) {
@@ -31,6 +31,7 @@ class UsersController {
 
       userQueue.add({ userId });
       return res.status(201).json({ email, id: userId });
+
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Server error' });
