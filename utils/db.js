@@ -21,15 +21,15 @@ class DBClient {
   }
 
   async nbUsers() {
-    return this.client.db().collection('users').countDocuments();
+    return this.client.db('files_manager').collection('users').countDocuments();
   }
 
   async nbFiles() {
-    return this.client.db().collection('files').countDocuments();
+    return this.client.db('files_manager').collection('files').countDocuments();
   }
 
   async usersCollection() {
-    return this.client.db().collection('users');
+    return this.client.db('files_manager').collection('users');
   }
 }
 
