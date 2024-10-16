@@ -11,3 +11,6 @@ app.use('/', routes);
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+// eslint-disable-next-line import/first, eol-last, import/extensions
+import './worker.js';

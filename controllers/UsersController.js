@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
-const userQueue = new Queue('email sending');
+const userQueue = new Queue('userQueue');
 
 class UsersController {
   static async postNew(req, res) {
