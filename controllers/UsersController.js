@@ -1,9 +1,13 @@
 import sha1 from 'sha1';
+import Queue from 'bull/lib/queue';
 import dbClient from '../utils/db';
+
+const userQueue = new Queue('email sending');
 
 class UsersController {
   static async postNew(req, res) {
-    const { email, password } = req.body;
+    const email = req.body ? req.body.email : null;
+    const password = req.body ? req.body.password : null;
 
     if (!email) {
       return res.status(400).json({ error: 'Missing email' });
@@ -13,23 +17,20 @@ class UsersController {
       return res.status(400).json({ error: 'Missing password' });
     }
 
-    const hashedPassword = sha1(password);
-
     try {
-      const collection = dbClient.db().collection('users');
-      const existingUser = await collection.findOne({ email });
+      const usersCollection = dbClient.db().collection('users');
+      const existingUser = await usersCollection.findOne({ email });
 
       if (existingUser) {
         return res.status(400).json({ error: 'Already exist' });
       }
 
-      await collection.insertOne({ email, password: hashedPassword });
-      const newUser = await collection.findOne(
-        { email },
-        { projection: { email: 1 } },
-      );
+      const hashedPassword = sha1(password);
+      const insertionInfo = await usersCollection.insertOne({ email, password: hashedPassword });
+      const userId = insertionInfo.insertedId.toString();
 
-      return res.status(201).json({ id: newUser._id, email: newUser.email });
+      userQueue.add({ userId });
+      return res.status(201).json({ email, id: userId });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Server error' });
