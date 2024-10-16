@@ -31,7 +31,6 @@ class UsersController {
 
       userQueue.add({ userId });
       return res.status(201).json({ email, id: userId });
-
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Server error' });
